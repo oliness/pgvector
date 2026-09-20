@@ -96,6 +96,14 @@ $explain = $node->safe_psql("postgres", qq(
 ));
 like($explain, qr/Seq Scan/);
 
+# Test without limit
+# https://github.com/pgvector/pgvector/issues/846
+$explain = $node->safe_psql("postgres", qq(
+	SET random_page_cost = 1.1;
+	EXPLAIN ANALYZE SELECT i FROM tst ORDER BY v <-> '$query';
+));
+like($explain, qr/Seq Scan/);
+
 # Test attribute index
 $node->safe_psql("postgres", "CREATE INDEX attribute_idx ON tst (c);");
 $explain = $node->safe_psql("postgres", qq(

@@ -1,0 +1,110 @@
+-- Queries without LIMIT must return every row in order
+-- https://github.com/pgvector/pgvector/issues/846
+-- Make the index path cheaper than any sort
+SET enable_sort = off;
+CREATE TABLE expected AS SELECT string_agg(i::text, ',' ORDER BY i) AS ids_asc, string_agg(i::text, ',' ORDER BY i DESC) AS ids_desc FROM generate_series(1, 500) i;
+-- vector
+CREATE TABLE t (i int4, v vector(3));
+INSERT INTO t SELECT i, ARRAY[1, i, 0] FROM generate_series(1, 500) i;
+CREATE INDEX idx ON t USING hnsw (v vector_l2_ops);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_asc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <-> '[0,0,0]') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+CREATE INDEX idx ON t USING hnsw (v vector_ip_ops);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_desc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <#> '[0,1,0]') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+CREATE INDEX idx ON t USING hnsw (v vector_cosine_ops);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_asc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <=> '[1,0,0]') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+CREATE INDEX idx ON t USING hnsw (v vector_l1_ops);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_asc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <+> '[0,0,0]') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+CREATE INDEX idx ON t USING ivfflat (v vector_l2_ops) WITH (lists = 10);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_asc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <-> '[0,0,0]') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+DROP TABLE t;
+-- halfvec
+CREATE TABLE t (i int4, v halfvec(3));
+INSERT INTO t SELECT i, ARRAY[1, i, 0] FROM generate_series(1, 500) i;
+CREATE INDEX idx ON t USING hnsw (v halfvec_l2_ops);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_asc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <-> '[0,0,0]') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+CREATE INDEX idx ON t USING ivfflat (v halfvec_l2_ops) WITH (lists = 10);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_asc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <-> '[0,0,0]') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+DROP TABLE t;
+-- sparsevec
+CREATE TABLE t (i int4, v sparsevec(3));
+INSERT INTO t SELECT i, ARRAY[1, i, 0] FROM generate_series(1, 500) i;
+CREATE INDEX idx ON t USING hnsw (v sparsevec_l2_ops);
+SELECT COUNT(*), string_agg(i::text, ',') = (SELECT ids_asc FROM expected) AS ordered FROM (SELECT i FROM t ORDER BY v <-> '{}/3') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+DROP TABLE t;
+-- bit (distances have ties, so compare distances instead of ids)
+CREATE TABLE t (i int4, v bit(16));
+INSERT INTO t SELECT i, i::bit(16) FROM generate_series(1, 500) i;
+CREATE INDEX idx ON t USING hnsw (v bit_hamming_ops);
+SELECT COUNT(*), string_agg(d::text, ',') = (SELECT string_agg((v <~> '1010101010101010')::text, ',' ORDER BY v <~> '1010101010101010') FROM t) AS ordered FROM (SELECT v <~> '1010101010101010' AS d FROM t ORDER BY v <~> '1010101010101010') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+CREATE INDEX idx ON t USING hnsw (v bit_jaccard_ops);
+SELECT COUNT(*), string_agg(d::text, ',') = (SELECT string_agg((v <%> '1010101010101010')::text, ',' ORDER BY v <%> '1010101010101010') FROM t) AS ordered FROM (SELECT v <%> '1010101010101010' AS d FROM t ORDER BY v <%> '1010101010101010') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+CREATE INDEX idx ON t USING ivfflat (v bit_hamming_ops) WITH (lists = 10);
+SELECT COUNT(*), string_agg(d::text, ',') = (SELECT string_agg((v <~> '1010101010101010')::text, ',' ORDER BY v <~> '1010101010101010') FROM t) AS ordered FROM (SELECT v <~> '1010101010101010' AS d FROM t ORDER BY v <~> '1010101010101010') s;
+ count | ordered 
+-------+---------
+   500 | t
+(1 row)
+
+DROP INDEX idx;
+DROP TABLE t;
+DROP TABLE expected;
