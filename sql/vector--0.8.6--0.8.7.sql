@@ -1,6 +1,42 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "ALTER EXTENSION vector UPDATE TO '0.8.7'" to load this file. \quit
 
+CREATE FUNCTION jsonb_to_vector(jsonb, integer, boolean) RETURNS vector
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION json_to_vector(json, integer, boolean) RETURNS vector
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION vector_to_json(vector, integer, boolean) RETURNS json
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION jsonb_to_halfvec(jsonb, integer, boolean) RETURNS halfvec
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION json_to_halfvec(json, integer, boolean) RETURNS halfvec
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION halfvec_to_json(halfvec, integer, boolean) RETURNS json
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (jsonb AS vector)
+	WITH FUNCTION jsonb_to_vector(jsonb, integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (json AS vector)
+	WITH FUNCTION json_to_vector(json, integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (vector AS json)
+	WITH FUNCTION vector_to_json(vector, integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (jsonb AS halfvec)
+	WITH FUNCTION jsonb_to_halfvec(jsonb, integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (json AS halfvec)
+	WITH FUNCTION json_to_halfvec(json, integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (halfvec AS json)
+	WITH FUNCTION halfvec_to_json(halfvec, integer, boolean) AS ASSIGNMENT;
+
 COMMENT ON FUNCTION vector_in(cstring, oid, integer) IS 'I/O';
 
 COMMENT ON FUNCTION vector_out(vector) IS 'I/O';
@@ -78,6 +114,12 @@ COMMENT ON FUNCTION array_to_vector(real[], integer, boolean) IS 'convert float4
 COMMENT ON FUNCTION array_to_vector(double precision[], integer, boolean) IS 'convert float8 array to vector';
 
 COMMENT ON FUNCTION array_to_vector(numeric[], integer, boolean) IS 'convert numeric array to vector';
+
+COMMENT ON FUNCTION jsonb_to_vector(jsonb, integer, boolean) IS 'convert jsonb to vector';
+
+COMMENT ON FUNCTION json_to_vector(json, integer, boolean) IS 'convert json to vector';
+
+COMMENT ON FUNCTION vector_to_json(vector, integer, boolean) IS 'convert vector to json';
 
 COMMENT ON FUNCTION vector_to_float4(vector, integer, boolean) IS 'convert vector to float4 array';
 
@@ -196,6 +238,12 @@ COMMENT ON FUNCTION array_to_halfvec(real[], integer, boolean) IS 'convert float
 COMMENT ON FUNCTION array_to_halfvec(double precision[], integer, boolean) IS 'convert float8 array to halfvec';
 
 COMMENT ON FUNCTION array_to_halfvec(numeric[], integer, boolean) IS 'convert numeric array to halfvec';
+
+COMMENT ON FUNCTION jsonb_to_halfvec(jsonb, integer, boolean) IS 'convert jsonb to halfvec';
+
+COMMENT ON FUNCTION json_to_halfvec(json, integer, boolean) IS 'convert json to halfvec';
+
+COMMENT ON FUNCTION halfvec_to_json(halfvec, integer, boolean) IS 'convert halfvec to json';
 
 COMMENT ON FUNCTION halfvec_to_float4(halfvec, integer, boolean) IS 'convert halfvec to float4 array';
 

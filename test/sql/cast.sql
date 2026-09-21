@@ -129,5 +129,61 @@ SELECT array_to_vector(array_agg(n), 16001, false) FROM generate_series(1, 16001
 SELECT array_agg(n)::halfvec FROM generate_series(1, 16001) n;
 SELECT array_agg(n)::sparsevec FROM generate_series(1, 16001) n;
 
+SELECT '[1,2,3]'::jsonb::vector;
+SELECT '[1.0,2.0,3.0]'::jsonb::vector;
+SELECT '[1,2,3]'::jsonb::vector(3);
+SELECT '[1,2,3]'::jsonb::vector(2);
+SELECT '[null]'::jsonb::vector;
+SELECT '["a"]'::jsonb::vector;
+SELECT '[1,2,"a"]'::jsonb::vector;
+SELECT '[]'::jsonb::vector;
+SELECT '{}'::jsonb::vector;
+SELECT '1'::jsonb::vector;
+SELECT '[[1,2]]'::jsonb::vector;
+SELECT '[true]'::jsonb::vector;
+SELECT '[1e39]'::jsonb::vector;
+SELECT jsonb_agg(n)::vector FROM generate_series(1, 16001) n;
+
+SELECT '[1,2,3]'::jsonb::halfvec;
+SELECT '[1.0,2.0,3.0]'::jsonb::halfvec;
+SELECT '[1,2,3]'::jsonb::halfvec(3);
+SELECT '[1,2,3]'::jsonb::halfvec(2);
+SELECT '[null]'::jsonb::halfvec;
+SELECT '["a"]'::jsonb::halfvec;
+SELECT '[1,2,"a"]'::jsonb::halfvec;
+SELECT '[]'::jsonb::halfvec;
+SELECT '{}'::jsonb::halfvec;
+SELECT '1'::jsonb::halfvec;
+SELECT '[[1,2]]'::jsonb::halfvec;
+SELECT '[true]'::jsonb::halfvec;
+SELECT '[100000]'::jsonb::halfvec;
+SELECT jsonb_agg(n)::halfvec FROM generate_series(1, 16001) n;
+
+SELECT '[1,2,3]'::json::vector;
+SELECT '[1.0,2.0,3.0]'::json::vector;
+SELECT '[1,2,3]'::json::vector(3);
+SELECT '[1,2,3]'::json::vector(2);
+SELECT '[null]'::json::vector;
+SELECT '["a"]'::json::vector;
+SELECT '[]'::json::vector;
+SELECT '{}'::json::vector;
+SELECT '1'::json::vector;
+SELECT '[[1,2]]'::json::vector;
+SELECT '[1e39]'::json::vector;
+SELECT json_agg(n)::vector FROM generate_series(1, 16001) n;
+
+SELECT '[1,2,3]'::json::halfvec;
+SELECT '[1,2,3]'::json::halfvec(2);
+SELECT '["a"]'::json::halfvec;
+SELECT '[100000]'::json::halfvec;
+SELECT json_agg(n)::halfvec FROM generate_series(1, 16001) n;
+
+SELECT '[1,2,3]'::vector::json;
+SELECT '[1,2,3]'::halfvec::json;
+SELECT '[1.5,-2.5,0]'::vector::json;
+SELECT ('[1,2,3]'::vector::json)::vector;
+SELECT ('[1,2,3]'::halfvec::json)::halfvec;
+SELECT '[1,2,3]'::vector::json::jsonb;
+
 -- ensure no error
 SELECT ARRAY[1,2,3] = ARRAY[1,2,3];

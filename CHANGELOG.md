@@ -1,5 +1,7 @@
 ## 0.8.7 (unreleased)
 
+- Added casts for `json` and `jsonb` to `vector` and `halfvec`
+- Added casts for `vector` and `halfvec` to `json`
 - Fixed error with `avg` aggregate when no matching rows
 
 ## 0.8.6 (2026-07-29)

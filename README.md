@@ -630,6 +630,35 @@ Get the nearest neighbors by L2 distance
 SELECT * FROM items ORDER BY embedding <-> '{1:3,3:1,5:2}/5' LIMIT 5;
 ```
 
+## JSON
+
+Convert `json` and `jsonb` arrays to vectors
+
+```sql
+SELECT '[1,2,3]'::json::vector(3);
+SELECT '[1,2,3]'::jsonb::halfvec(3);
+```
+
+Insert vectors from a JSON column
+
+```sql
+INSERT INTO items (embedding) SELECT doc->'embedding' FROM documents;
+```
+
+Index a JSON column without storing a separate vector column
+
+```sql
+CREATE INDEX ON documents USING hnsw (((doc->'embedding')::vector(3)) vector_l2_ops);
+```
+
+Convert vectors to `json`
+
+```sql
+SELECT embedding::json FROM items;
+```
+
+`json` converts faster than `jsonb`, which stores numbers as `numeric`
+
 ## Hybrid Search
 
 Use together with Postgres [full-text search](https://www.postgresql.org/docs/current/textsearch-intro.html) for hybrid search.

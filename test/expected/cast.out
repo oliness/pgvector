@@ -376,6 +376,174 @@ SELECT array_agg(n)::halfvec FROM generate_series(1, 16001) n;
 ERROR:  halfvec cannot have more than 16000 dimensions
 SELECT array_agg(n)::sparsevec FROM generate_series(1, 16001) n;
 ERROR:  sparsevec cannot have more than 16000 non-zero elements
+SELECT '[1,2,3]'::jsonb::vector;
+ vector  
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1.0,2.0,3.0]'::jsonb::vector;
+ vector  
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::jsonb::vector(3);
+ vector  
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::jsonb::vector(2);
+ERROR:  expected 2 dimensions, not 3
+SELECT '[null]'::jsonb::vector;
+ERROR:  array must not contain nulls
+SELECT '["a"]'::jsonb::vector;
+ERROR:  expected number
+SELECT '[1,2,"a"]'::jsonb::vector;
+ERROR:  expected number
+SELECT '[]'::jsonb::vector;
+ERROR:  vector must have at least 1 dimension
+SELECT '{}'::jsonb::vector;
+ERROR:  jsonb value must be array
+SELECT '1'::jsonb::vector;
+ERROR:  jsonb value must be array
+SELECT '[[1,2]]'::jsonb::vector;
+ERROR:  expected number
+SELECT '[true]'::jsonb::vector;
+ERROR:  expected number
+SELECT '[1e39]'::jsonb::vector;
+ERROR:  "1000000000000000000000000000000000000000" is out of range for type vector
+SELECT jsonb_agg(n)::vector FROM generate_series(1, 16001) n;
+ERROR:  vector cannot have more than 16000 dimensions
+SELECT '[1,2,3]'::jsonb::halfvec;
+ halfvec 
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1.0,2.0,3.0]'::jsonb::halfvec;
+ halfvec 
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::jsonb::halfvec(3);
+ halfvec 
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::jsonb::halfvec(2);
+ERROR:  expected 2 dimensions, not 3
+SELECT '[null]'::jsonb::halfvec;
+ERROR:  array must not contain nulls
+SELECT '["a"]'::jsonb::halfvec;
+ERROR:  expected number
+SELECT '[1,2,"a"]'::jsonb::halfvec;
+ERROR:  expected number
+SELECT '[]'::jsonb::halfvec;
+ERROR:  halfvec must have at least 1 dimension
+SELECT '{}'::jsonb::halfvec;
+ERROR:  jsonb value must be array
+SELECT '1'::jsonb::halfvec;
+ERROR:  jsonb value must be array
+SELECT '[[1,2]]'::jsonb::halfvec;
+ERROR:  expected number
+SELECT '[true]'::jsonb::halfvec;
+ERROR:  expected number
+SELECT '[100000]'::jsonb::halfvec;
+ERROR:  "100000" is out of range for type halfvec
+SELECT jsonb_agg(n)::halfvec FROM generate_series(1, 16001) n;
+ERROR:  halfvec cannot have more than 16000 dimensions
+SELECT '[1,2,3]'::json::vector;
+ vector  
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1.0,2.0,3.0]'::json::vector;
+ vector  
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::json::vector(3);
+ vector  
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::json::vector(2);
+ERROR:  expected 2 dimensions, not 3
+SELECT '[null]'::json::vector;
+ERROR:  invalid input syntax for type vector: "[null]"
+SELECT '["a"]'::json::vector;
+ERROR:  invalid input syntax for type vector: "["a"]"
+SELECT '[]'::json::vector;
+ERROR:  vector must have at least 1 dimension
+SELECT '{}'::json::vector;
+ERROR:  invalid input syntax for type vector: "{}"
+DETAIL:  Vector contents must start with "[".
+SELECT '1'::json::vector;
+ERROR:  invalid input syntax for type vector: "1"
+DETAIL:  Vector contents must start with "[".
+SELECT '[[1,2]]'::json::vector;
+ERROR:  invalid input syntax for type vector: "[[1,2]]"
+SELECT '[1e39]'::json::vector;
+ERROR:  "1e39" is out of range for type vector
+SELECT json_agg(n)::vector FROM generate_series(1, 16001) n;
+ERROR:  vector cannot have more than 16000 dimensions
+SELECT '[1,2,3]'::json::halfvec;
+ halfvec 
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::json::halfvec(2);
+ERROR:  expected 2 dimensions, not 3
+SELECT '["a"]'::json::halfvec;
+ERROR:  invalid input syntax for type halfvec: "["a"]"
+SELECT '[100000]'::json::halfvec;
+ERROR:  "100000" is out of range for type halfvec
+SELECT json_agg(n)::halfvec FROM generate_series(1, 16001) n;
+ERROR:  halfvec cannot have more than 16000 dimensions
+SELECT '[1,2,3]'::vector::json;
+  json   
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::halfvec::json;
+  json   
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1.5,-2.5,0]'::vector::json;
+     json     
+--------------
+ [1.5,-2.5,0]
+(1 row)
+
+SELECT ('[1,2,3]'::vector::json)::vector;
+ vector  
+---------
+ [1,2,3]
+(1 row)
+
+SELECT ('[1,2,3]'::halfvec::json)::halfvec;
+ halfvec 
+---------
+ [1,2,3]
+(1 row)
+
+SELECT '[1,2,3]'::vector::json::jsonb;
+   jsonb   
+-----------
+ [1, 2, 3]
+(1 row)
+
 -- ensure no error
 SELECT ARRAY[1,2,3] = ARRAY[1,2,3];
  ?column? 

@@ -13,8 +13,10 @@
 #include "port.h"				/* for strtof() */
 #include "sparsevec.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
+#include "utils/jsonb.h"
 #include "utils/lsyscache.h"
 #include "utils/varbit.h"
 #include "vector.h"
@@ -506,6 +508,108 @@ array_to_halfvec(PG_FUNCTION_ARGS)
 		CheckElement(result->x[i]);
 
 	PG_RETURN_POINTER(result);
+}
+
+/*
+ * Convert jsonb to half vector
+ */
+FUNCTION_PREFIX PG_FUNCTION_INFO_V1(jsonb_to_halfvec);
+Datum
+jsonb_to_halfvec(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *jsonb = PG_GETARG_JSONB_P(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	HalfVector *result;
+	JsonbIterator *it;
+	JsonbValue	v;
+	JsonbIteratorToken r;
+	int			dim;
+	int			i = 0;
+
+	if (!JB_ROOT_IS_ARRAY(jsonb) || JB_ROOT_IS_SCALAR(jsonb))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("jsonb value must be array")));
+
+	dim = JsonContainerSize(&jsonb->root);
+	CheckDim(dim);
+	CheckExpectedDim(typmod, dim);
+
+	result = InitHalfVector(dim);
+	it = JsonbIteratorInit(&jsonb->root);
+
+	while ((r = JsonbIteratorNext(&it, &v, true)) != WJB_DONE && i < dim)
+	{
+		if (r != WJB_ELEM)
+			continue;
+
+		switch (v.type)
+		{
+			case jbvNumeric:
+				{
+					/* Like numeric_float4, without the extra function calls */
+					char	   *num = DatumGetCString(DirectFunctionCall1(numeric_out, NumericGetDatum(v.val.numeric)));
+					float		val;
+
+					/* Use strtof like float4in to avoid a double-rounding problem */
+					errno = 0;
+					val = strtof(num, NULL);
+
+					/* Check for range error like float4in */
+					if (errno == ERANGE && isinf(val))
+						ereport(ERROR,
+								(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+								 errmsg("\"%s\" is out of range for type halfvec", num)));
+
+					/* num is freed with the memory context, like jsonb_out */
+					result->x[i] = Float4ToHalf(val);
+					CheckElement(result->x[i]);
+					i++;
+				}
+				break;
+			case jbvNull:
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("array must not contain nulls")));
+				break;
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_EXCEPTION),
+						 errmsg("expected number")));
+		}
+	}
+
+	PG_RETURN_POINTER(result);
+}
+
+/*
+ * Convert halfvec to json
+ */
+FUNCTION_PREFIX PG_FUNCTION_INFO_V1(halfvec_to_json);
+Datum
+halfvec_to_json(PG_FUNCTION_ARGS)
+{
+	HalfVector	   *vec = PG_GETARG_HALFVEC_P(0);
+	char	   *str;
+
+	/* The text representation of a halfvec is a JSON array */
+	str = DatumGetCString(DirectFunctionCall1(halfvec_out, PointerGetDatum(vec)));
+
+	PG_RETURN_DATUM(DirectFunctionCall1(json_in, CStringGetDatum(str)));
+}
+
+/*
+ * Convert json to halfvec
+ */
+FUNCTION_PREFIX PG_FUNCTION_INFO_V1(json_to_halfvec);
+Datum
+json_to_halfvec(PG_FUNCTION_ARGS)
+{
+	char	   *lit = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int32		typmod = PG_GETARG_INT32(1);
+
+	/* json stores the original text, so parse it directly */
+	return DirectFunctionCall3(halfvec_in, CStringGetDatum(lit), ObjectIdGetDatum(InvalidOid), Int32GetDatum(typmod));
 }
 
 /*
