@@ -224,6 +224,16 @@ CREATE FUNCTION array_to_vector(numeric[], integer, boolean) RETURNS vector
 
 COMMENT ON FUNCTION array_to_vector(numeric[], integer, boolean) IS 'convert numeric array to vector';
 
+CREATE FUNCTION jsonb_to_vector(jsonb, integer, boolean) RETURNS vector
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+COMMENT ON FUNCTION jsonb_to_vector(jsonb, integer, boolean) IS 'convert jsonb to vector';
+
+CREATE FUNCTION vector_to_json(vector, integer, boolean) RETURNS json
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+COMMENT ON FUNCTION vector_to_json(vector, integer, boolean) IS 'convert vector to json';
+
 CREATE FUNCTION vector_to_float4(vector, integer, boolean) RETURNS real[]
 	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -248,6 +258,12 @@ CREATE CAST (double precision[] AS vector)
 
 CREATE CAST (numeric[] AS vector)
 	WITH FUNCTION array_to_vector(numeric[], integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (jsonb AS vector)
+	WITH FUNCTION jsonb_to_vector(jsonb, integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (vector AS json)
+	WITH FUNCTION vector_to_json(vector, integer, boolean) AS ASSIGNMENT;
 
 -- vector operators
 
@@ -678,6 +694,16 @@ CREATE FUNCTION array_to_halfvec(numeric[], integer, boolean) RETURNS halfvec
 
 COMMENT ON FUNCTION array_to_halfvec(numeric[], integer, boolean) IS 'convert numeric array to halfvec';
 
+CREATE FUNCTION jsonb_to_halfvec(jsonb, integer, boolean) RETURNS halfvec
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+COMMENT ON FUNCTION jsonb_to_halfvec(jsonb, integer, boolean) IS 'convert jsonb to halfvec';
+
+CREATE FUNCTION halfvec_to_json(halfvec, integer, boolean) RETURNS json
+	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+COMMENT ON FUNCTION halfvec_to_json(halfvec, integer, boolean) IS 'convert halfvec to json';
+
 CREATE FUNCTION halfvec_to_float4(halfvec, integer, boolean) RETURNS real[]
 	AS 'MODULE_PATHNAME' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -708,6 +734,12 @@ CREATE CAST (double precision[] AS halfvec)
 
 CREATE CAST (numeric[] AS halfvec)
 	WITH FUNCTION array_to_halfvec(numeric[], integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (jsonb AS halfvec)
+	WITH FUNCTION jsonb_to_halfvec(jsonb, integer, boolean) AS ASSIGNMENT;
+
+CREATE CAST (halfvec AS json)
+	WITH FUNCTION halfvec_to_json(halfvec, integer, boolean) AS ASSIGNMENT;
 
 -- halfvec operators
 
